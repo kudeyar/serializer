@@ -23,7 +23,7 @@ class Serializer
      */
     public function serialize($object): string
     {
-        $clone = clone $object;
+        $clone = is_object($object) ? clone $object : $object;
         $this->transformClosures($clone);
         return serialize($clone);
     }
@@ -45,14 +45,15 @@ class Serializer
      */
     public function transformClosures(&$object)
     {
-        foreach ($object as $key => &$value) {
-            if ($value instanceof Closure) {
-                $value = $this->serializer->serialize($value);
-            } elseif (is_object($value) || is_array($value)) {
-                $value = $this->transformClosures($value);
+        if (is_object($object) || is_array($object)) {
+            foreach ($object as $key => &$value) {
+                if ($value instanceof Closure) {
+                    $value = $this->serializer->serialize($value);
+                } elseif (is_object($value) || is_array($value)) {
+                    $value = $this->transformClosures($value);
+                }
             }
         }
-
         return $object;
     }
 
@@ -62,11 +63,13 @@ class Serializer
      */
     public function restoreClosures(&$object)
     {
-        foreach ($object as $key => &$value) {
-            if (is_string($value) && strpos($value, $this->closureMarker)) {
-                $value = $this->serializer->unserialize($value);
-            } elseif (is_object($value) || is_array($value)) {
-                $value = $this->restoreClosures($value);
+        if (is_object($object) || is_array($object)) {
+            foreach ($object as $key => &$value) {
+                if (is_string($value) && strpos($value, $this->closureMarker)) {
+                    $value = $this->serializer->unserialize($value);
+                } elseif (is_object($value) || is_array($value)) {
+                    $value = $this->restoreClosures($value);
+                }
             }
         }
 
