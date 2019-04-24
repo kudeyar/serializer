@@ -2,6 +2,7 @@
 
 namespace harlam\Serialize;
 
+use Closure;
 use SuperClosure\SerializerInterface;
 
 class Serializer
@@ -22,7 +23,9 @@ class Serializer
      */
     public function serialize($object): string
     {
-        return serialize($this->serializeClosures($object));
+        $clone = clone $object;
+        $this->transformClosures($clone);
+        return serialize($clone);
     }
 
     /**
@@ -31,22 +34,24 @@ class Serializer
      */
     public function unserialize(string $data)
     {
-        return $this->restoreClosures(unserialize($data));
+        $object = unserialize($data);
+        $this->restoreClosures($object);
+        return $object;
     }
 
     /**
      * @param $object
      * @return mixed
      */
-    public function serializeClosures($object)
+    public function transformClosures(&$object)
     {
-        array_walk_recursive($object, function (&$value) {
-            if ($value instanceof \Closure) {
+        foreach ($object as $key => &$value) {
+            if ($value instanceof Closure) {
                 $value = $this->serializer->serialize($value);
             } elseif (is_object($value) || is_array($value)) {
-                $value = $this->serializeClosures($value);
+                $value = $this->transformClosures($value);
             }
-        });
+        }
 
         return $object;
     }
@@ -55,15 +60,15 @@ class Serializer
      * @param $object
      * @return mixed
      */
-    public function restoreClosures($object)
+    public function restoreClosures(&$object)
     {
-        array_walk_recursive($object, function (&$value) {
+        foreach ($object as $key => &$value) {
             if (is_string($value) && strpos($value, $this->closureMarker)) {
                 $value = $this->serializer->unserialize($value);
             } elseif (is_object($value) || is_array($value)) {
                 $value = $this->restoreClosures($value);
             }
-        });
+        }
 
         return $object;
     }
