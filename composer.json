@@ -1,0 +1,21 @@
+{
+  "name": "harlam/serializer",
+  "description": "Serialize with closures",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "harlam",
+      "email": "harlamov.nikolay@yandex.ru"
+    }
+  ],
+  "require": {
+    "php": ">=7.0",
+    "jeremeamia/SuperClosure": "^2.4"
+  },
+  "autoload": {
+    "psr-4": {
+      "harlam\\Serialize\\": "src"
+    }
+  }
+}
