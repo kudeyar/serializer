@@ -23,9 +23,10 @@ class Serializer
      */
     public function serialize($object): string
     {
-        $clone = is_object($object) ? clone $object : $object;
-        $this->transformClosures($clone);
-        return serialize($clone);
+        $this->transformClosures($object);
+        $serialized = serialize($object);
+        $this->restoreClosures($object);
+        return $serialized;
     }
 
     /**
@@ -54,6 +55,7 @@ class Serializer
                 }
             }
         }
+
         return $object;
     }
 
